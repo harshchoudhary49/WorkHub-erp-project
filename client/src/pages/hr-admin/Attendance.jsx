@@ -12,18 +12,6 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   label: new Date(2000, i, 1).toLocaleString('default', { month: 'long' }),
 }));
 
-function SectionCard({ title, subtitle, children, className = '' }) {
-  return (
-    <div className={`rounded-2xl border border-slate-200 dark:border-gunmetal-700 bg-white dark:bg-gunmetal-800 shadow-card overflow-hidden ${className}`}>
-      <div className="border-b border-slate-100 dark:border-gunmetal-700/60 px-5 py-4">
-        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{title}</p>
-        {subtitle && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{subtitle}</p>}
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
-
 export default function HrAttendance() {
   const now = new Date();
   const [employees, setEmployees] = useState([]);
@@ -65,46 +53,37 @@ export default function HrAttendance() {
     }
   };
 
-  const attendancePct = summary?.percentage || 0;
-  const isGood = attendancePct >= (summary?.targetPercentage || 75);
-
   return (
-    <div className="page-enter space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Attendance</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Monitor and manage employee attendance records</p>
-      </div>
+    <div>
+      <h1 className="text-xl font-bold text-slate-900">Attendance</h1>
 
-      {/* End-of-day tool */}
-      <SectionCard
-        title="End-of-day: mark absentees"
-        subtitle="Marks anyone without a record as absent. Skips weekends and holidays."
-      >
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Date</label>
-            <input
-              type="date"
-              value={markDate}
-              onChange={(e) => setMarkDate(e.target.value)}
-              className="rounded-[10px] border border-slate-200 dark:border-gunmetal-600 bg-white dark:bg-gunmetal-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 transition-all"
-            />
-          </div>
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+        <p className="text-sm font-medium text-slate-700">End-of-day: mark absentees</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Marks anyone without a record for the chosen date as absent. Skips weekends and company holidays.
+          In production this would run automatically at end of day (Phase 12).
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <input
+            type="date"
+            value={markDate}
+            onChange={(e) => setMarkDate(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary-500"
+          />
           <Button onClick={handleMarkAbsentees} loading={marking}>
             Run for this date
           </Button>
         </div>
         {message && (
-          <div className="mt-4">
+          <div className="mt-3">
             <Banner tone={message.tone}>{message.text}</Banner>
           </div>
         )}
-      </SectionCard>
+      </div>
 
-      {/* Employee lookup */}
-      <SectionCard title="Look up an employee" subtitle="View detailed attendance history for any team member">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+        <p className="text-sm font-medium text-slate-700">Look up an employee</p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Select
             label="Employee"
             placeholder="Select an employee"
@@ -112,12 +91,7 @@ export default function HrAttendance() {
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
           />
-          <Select
-            label="Month"
-            options={MONTHS}
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-          />
+          <Select label="Month" options={MONTHS} value={month} onChange={(e) => setMonth(Number(e.target.value))} />
           <Select
             label="Year"
             options={[year - 1, year, year + 1].map((y) => ({ value: y, label: String(y) }))}
@@ -126,64 +100,47 @@ export default function HrAttendance() {
           />
         </div>
 
-        {error && <div className="mt-4"><Banner>{error}</Banner></div>}
+        {error && (
+          <div className="mt-4">
+            <Banner>{error}</Banner>
+          </div>
+        )}
 
         {summary && (
-          <div className="mt-6">
-            {/* Stats row */}
-            <div className="grid grid-cols-3 gap-4 mb-5">
-              <div className="rounded-xl border border-slate-200 dark:border-gunmetal-700 p-4 text-center stat-card-blue">
-                <p className={`text-3xl font-extrabold ${isGood ? 'text-rivet-600 dark:text-rivet-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {summary.percentage}%
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Attendance rate</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-gunmetal-700 p-4 text-center">
-                <p className="text-3xl font-extrabold text-primary-600 dark:text-primary-400">
-                  {summary.presentEquivalent}
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Days present</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-gunmetal-700 p-4 text-center">
-                <p className="text-3xl font-extrabold text-slate-700 dark:text-slate-300">
-                  {summary.workingDaysElapsed}
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Working days</p>
-              </div>
+          <div className="mt-5">
+            <p className="text-2xl font-bold text-slate-900">{summary.percentage}%</p>
+            <div className="mt-2">
+              <ProgressBar value={summary.percentage} tone={summary.percentage >= summary.targetPercentage ? 'primary' : 'amber'} />
             </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {summary.presentEquivalent} / {summary.workingDaysElapsed} working days present
+            </p>
 
-            <div className="mb-5">
-              <ProgressBar value={summary.percentage} tone={isGood ? 'primary' : 'amber'} />
-            </div>
-
-            {/* Records table */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gunmetal-700">
+            <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
               <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-gunmetal-900/40 border-b border-slate-200 dark:border-gunmetal-700">
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Check in</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Check out</th>
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Check in</th>
+                    <th className="px-4 py-3">Check out</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-gunmetal-700/60">
+                <tbody className="divide-y divide-slate-100">
                   {summary.records
                     .slice()
                     .reverse()
                     .map((r) => (
-                      <tr key={r._id} className="hover:bg-slate-50/80 dark:hover:bg-gunmetal-700/30 transition-colors">
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300 tabular-nums">
-                          {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
+                      <tr key={r._id}>
+                        <td className="px-4 py-3 text-slate-700">{new Date(r.date).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <StatusBadge status={r.status} />
                         </td>
-                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 tabular-nums">
-                          {r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        <td className="px-4 py-3 text-slate-500">
+                          {r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '—'}
                         </td>
-                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 tabular-nums">
-                          {r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        <td className="px-4 py-3 text-slate-500">
+                          {r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '—'}
                         </td>
                       </tr>
                     ))}
@@ -192,7 +149,7 @@ export default function HrAttendance() {
             </div>
           </div>
         )}
-      </SectionCard>
+      </div>
     </div>
   );
 }

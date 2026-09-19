@@ -4,14 +4,10 @@ const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid id');
 
 export const checkInSchema = z.object({
   mode: z.enum(['office', 'remote']).optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
 });
 
 export const checkOutSchema = z.object({
   notes: z.string().trim().optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
 });
 
 export const monthQuerySchema = z.object({

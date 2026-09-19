@@ -11,9 +11,6 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Banner from '../../components/ui/Banner.jsx';
 import Card from '../../components/ui/Card.jsx';
 import { Grid, GridItem } from '../../components/ui/Grid.jsx';
-import Skeleton from '../../components/ui/Skeleton.jsx';
-import Button from '../../components/ui/Button.jsx';
-import { getCurrentLocation } from '../../utils/location.js';
 
 // This page is the reference example for the default layout: everything
 // below sits on the 12-column Grid, and every panel is a Card with an
@@ -28,69 +25,12 @@ export default function EmployeeDashboard() {
   const [announcements, setAnnouncements] = useState([]);
   const [recognitions, setRecognitions] = useState([]);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [actionError, setActionError] = useState('');
-
-  const loadAttendance = async () => {
-    try {
-      const { data } = await attendanceApi.myAttendance({});
-      setSummary(data.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load attendance');
-    }
-  };
-
-  const handleCheckIn = async (mode) => {
-    setBusy(true);
-    setActionError('');
-    try {
-      let location;
-      if (mode === 'office') {
-        try {
-          location = await getCurrentLocation();
-        } catch (locErr) {
-          setActionError(locErr.message);
-          setBusy(false);
-          return;
-        }
-      }
-      await attendanceApi.checkIn(mode, location?.lat, location?.lng);
-      await loadAttendance();
-    } catch (err) {
-      setActionError(err.response?.data?.message || 'Could not check in');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleCheckOut = async () => {
-    setBusy(true);
-    setActionError('');
-    try {
-      const todayRec = summary?.records.find(
-        (r) => new Date(r.date).toDateString() === new Date().toDateString()
-      );
-      let location;
-      if (todayRec?.mode === 'office') {
-        try {
-          location = await getCurrentLocation();
-        } catch (locErr) {
-          setActionError(locErr.message);
-          setBusy(false);
-          return;
-        }
-      }
-      await attendanceApi.checkOut(undefined, location?.lat, location?.lng);
-      await loadAttendance();
-    } catch (err) {
-      setActionError(err.response?.data?.message || 'Could not check out');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   useEffect(() => {
-    loadAttendance();
+    attendanceApi
+      .myAttendance({})
+      .then(({ data }) => setSummary(data.data))
+      .catch((err) => setError(err.response?.data?.message || 'Failed to load attendance'));
     leaveApi
       .myBalances()
       .then(({ data }) => setBalances(data.data))
@@ -120,30 +60,16 @@ export default function EmployeeDashboard() {
       .catch(() => {});
   }, []);
 
-  const keyBalances = balances.filter((b) => ['casual', 'sick', 'earned'].includes(b.type));
-
   const todayRecord = summary?.records.find(
     (r) => new Date(r.date).toDateString() === new Date().toDateString()
   );
-
-  if (!summary) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton.StatGrid count={4} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Skeleton.Card lines={4} className="h-48" />
-          <Skeleton.Card lines={4} className="h-48" />
-        </div>
-      </div>
-    );
-  }
+  const keyBalances = balances.filter((b) => ['casual', 'sick', 'earned'].includes(b.type));
 
   return (
-    <div className="page-enter">
-      <h1 className="text-xl font-bold text-gunmetal-800 dark:text-white">Welcome back</h1>
-      <p className="mt-1 text-sm text-gunmetal-400 dark:text-gunmetal-300">
-        Here's your daily summary — attendance, goals, tasks and more.
+    <div>
+      <h1 className="text-xl font-bold text-gunmetal-800">Welcome back</h1>
+      <p className="mt-1 text-sm text-gunmetal-400">
+        Here's a quick look at your attendance and leave. Tasks and goals widgets arrive in later phases.
       </p>
 
       {error && (
@@ -151,43 +77,6 @@ export default function EmployeeDashboard() {
           <Banner>{error}</Banner>
         </div>
       )}
-
-      {/* ── Clock-In / Clock-Out Widget ─────────────────── */}
-      <div className="mt-6 rounded-xl border border-slate-200 dark:border-gunmetal-700 bg-white dark:bg-gunmetal-800 p-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-gunmetal-400 dark:text-gunmetal-300">Today</p>
-        <div className="mt-3 flex flex-wrap items-center gap-4">
-          {!todayRecord?.checkIn ? (
-            <>
-              <Button onClick={() => handleCheckIn('office')} loading={busy} id="btn-checkin-office">
-                ✅ Check in (office)
-              </Button>
-              <Button variant="ghost" onClick={() => handleCheckIn('remote')} loading={busy} id="btn-checkin-remote">
-                🏠 Check in (remote)
-              </Button>
-            </>
-          ) : !todayRecord?.checkOut ? (
-            <>
-              <StatusBadge status={todayRecord.status} />
-              <p className="text-sm text-gunmetal-500 dark:text-gunmetal-300">
-                Checked in at {new Date(todayRecord.checkIn).toLocaleTimeString()}
-              </p>
-              <Button onClick={handleCheckOut} loading={busy} id="btn-checkout">
-                🔴 Check out
-              </Button>
-            </>
-          ) : (
-            <>
-              <StatusBadge status={todayRecord.status} />
-              <p className="text-sm text-gunmetal-500 dark:text-gunmetal-300">
-                {new Date(todayRecord.checkIn).toLocaleTimeString()} –{' '}
-                {new Date(todayRecord.checkOut).toLocaleTimeString()}
-                {todayRecord.workingHours ? ` · ${todayRecord.workingHours}h worked` : ''}
-              </p>
-            </>
-          )}
-        </div>
-        {actionError && <p className="mt-2 text-sm text-red-500">{actionError}</p>}
-      </div>
 
       <div className="mt-6 space-y-4">
         <Grid>

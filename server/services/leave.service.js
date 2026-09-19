@@ -7,7 +7,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { env } from '../config/env.js';
 import { getHolidayDateSet } from './holiday.service.js';
 import { notify } from './notification.service.js';
-import { startOfDay, isWeekend, eachDay } from '../utils/dateUtils.js';
+import { startOfDay, filterWorkingDays } from '../utils/dateUtils.js';
 
 const findEmployeeOrThrow = async (userId) => {
   const employee = await Employee.findOne({ user: userId });
@@ -17,10 +17,12 @@ const findEmployeeOrThrow = async (userId) => {
 
 // Working days (weekends + company holidays excluded) within [start, end] -
 // this is what a leave request actually "costs" and what gets marked on
-// Attendance once approved.
+// Attendance once approved. The actual filtering is `filterWorkingDays` in
+// dateUtils.js (pure, unit-tested); this wrapper just supplies the
+// holiday set, which requires a DB read.
 const workingDaysInRange = async (officeId, start, end) => {
   const holidaySet = await getHolidayDateSet(officeId, start, end);
-  return eachDay(start, end).filter((day) => !isWeekend(day) && !holidaySet.has(day.getTime()));
+  return filterWorkingDays(start, end, holidaySet);
 };
 
 const ensureBalance = async (employeeId, year, type) => {

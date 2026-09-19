@@ -1,69 +1,48 @@
 import { Link } from 'react-router-dom';
 
-const ACCENT_CLASSES = {
-  blue: 'from-primary-500 to-primary-600',
-  green: 'from-rivet-400 to-rivet-500',
-  amber: 'from-amber-400 to-amber-500',
-  red: 'from-red-400 to-red-500',
-  violet: 'from-violet-400 to-violet-500',
-  none: 'from-transparent to-transparent',
-};
-
-const STAT_CARD_CLASSES = {
-  blue: 'stat-card-blue',
-  green: 'stat-card-green',
-  amber: 'stat-card-amber',
-  red: 'stat-card-red',
+// Panel styling on purpose stays flat (thin border, no soft drop shadow,
+// small radius) - closer to a control-panel gauge than a soft SaaS card.
+// The `accent` strip along the top does the job a status light does on
+// shop-floor equipment: which board does this panel belong to.
+const ACCENTS = {
+  steel: 'before:bg-primary-500',
+  amber: 'before:bg-amber-400',
+  safety: 'before:bg-safety-500',
+  rivet: 'before:bg-rivet-500',
+  none: 'before:bg-transparent',
 };
 
 export default function Card({
   title,
   subtitle,
   eyebrow,
-  accent = 'blue',
+  accent = 'steel',
   to,
-  stat,
   className = '',
   bodyClassName = '',
   children,
 }) {
-  const statClass = STAT_CARD_CLASSES[accent] || '';
-  const base = `relative overflow-hidden rounded-[14px] border bg-white dark:bg-gunmetal-800 shadow-card transition-all duration-200 ${
-    stat ? statClass : ''
+  const base = `relative overflow-hidden rounded-md border border-gunmetal-200/70 bg-white before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:content-[''] ${
+    ACCENTS[accent] || ACCENTS.steel
   }`;
-  const interactive = to
-    ? 'cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5'
-    : '';
+  const interactive = to ? 'transition-colors hover:border-primary-300' : '';
   const Wrapper = to ? Link : 'div';
   const wrapperProps = to ? { to } : {};
 
   return (
     <Wrapper {...wrapperProps} className={`${base} ${interactive} ${className}`}>
-      {/* Gradient accent bar */}
-      {accent !== 'none' && (
-        <div
-          className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${
-            ACCENT_CLASSES[accent] || ACCENT_CLASSES.blue
-          }`}
-        />
-      )}
-
-      <div className={`p-5 pt-6 ${bodyClassName}`}>
+      <div className={`p-5 pt-[22px] ${bodyClassName}`}>
         {(title || eyebrow) && (
-          <div className="mb-4">
+          <div className="mb-3">
             {eyebrow && (
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                {eyebrow}
-              </p>
+              <p className="text-xs font-medium text-gunmetal-400">{eyebrow}</p>
             )}
             {title && (
-              <p className="text-base font-semibold leading-tight text-slate-800 dark:text-slate-100">
+              <p className="font-display text-lg font-semibold leading-tight text-gunmetal-800">
                 {title}
               </p>
             )}
-            {subtitle && (
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-            )}
+            {subtitle && <p className="mt-0.5 text-sm text-gunmetal-400">{subtitle}</p>}
           </div>
         )}
         {children}

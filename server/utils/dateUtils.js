@@ -25,6 +25,16 @@ export const eachDay = (start, end) => {
   return days;
 };
 
+// Every calendar day in [start, end], inclusive, that isn't a weekend and
+// isn't in the given holiday set. Pure (no DB access) - callers that need
+// holiday exclusion fetch the holiday set first (see holiday.service.js's
+// getHolidayDateSet) and pass it in here, which is what makes this
+// function easy to unit test in isolation from MongoDB. Used by both
+// leave.service.js (how many days does a leave request cost) and the
+// attendance-percentage math's working-day count.
+export const filterWorkingDays = (start, end, holidayTimestampSet = new Set()) =>
+  eachDay(start, end).filter((day) => !isWeekend(day) && !holidayTimestampSet.has(day.getTime()));
+
 export const monthRange = (month, year) => {
   // month is 1-12 for readability at the call site.
   const start = new Date(Date.UTC(year, month - 1, 1));

@@ -1,8 +1,8 @@
 import { axiosClient } from './axiosClient.js';
 
 export const attendanceApi = {
-  checkIn: (mode, lat, lng) => axiosClient.post('/attendance/check-in', { mode, lat, lng }),
-  checkOut: (notes, lat, lng) => axiosClient.post('/attendance/check-out', { notes, lat, lng }),
+  checkIn: (mode) => axiosClient.post('/attendance/check-in', { mode }),
+  checkOut: (notes) => axiosClient.post('/attendance/check-out', { notes }),
   myAttendance: (params) => axiosClient.get('/attendance/me', { params }),
   employeeAttendance: (employeeId, params) =>
     axiosClient.get(`/attendance/${employeeId}`, { params }),

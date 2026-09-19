@@ -5,8 +5,6 @@ import Select from '../../components/ui/Select.jsx';
 import Banner from '../../components/ui/Banner.jsx';
 import ProgressBar from '../../components/ui/ProgressBar.jsx';
 import StatusBadge from '../../components/ui/StatusBadge.jsx';
-import Skeleton from '../../components/ui/Skeleton.jsx';
-import { getCurrentLocation } from '../../utils/location.js';
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   value: i + 1,
@@ -46,17 +44,7 @@ export default function EmployeeAttendance() {
     setBusy(true);
     setActionError('');
     try {
-      let location;
-      if (mode === 'office') {
-        try {
-          location = await getCurrentLocation();
-        } catch (locErr) {
-          setActionError(locErr.message);
-          setBusy(false);
-          return;
-        }
-      }
-      await attendanceApi.checkIn(mode, location?.lat, location?.lng);
+      await attendanceApi.checkIn(mode);
       load();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Could not check in');
@@ -69,17 +57,7 @@ export default function EmployeeAttendance() {
     setBusy(true);
     setActionError('');
     try {
-      let location;
-      if (today?.mode === 'office') {
-        try {
-          location = await getCurrentLocation();
-        } catch (locErr) {
-          setActionError(locErr.message);
-          setBusy(false);
-          return;
-        }
-      }
-      await attendanceApi.checkOut(undefined, location?.lat, location?.lng);
+      await attendanceApi.checkOut();
       load();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Could not check out');
@@ -89,16 +67,7 @@ export default function EmployeeAttendance() {
   };
 
   if (error) return <Banner>{error}</Banner>;
-  if (!summary) return (
-    <div className="space-y-4">
-      <Skeleton className="h-7 w-48" />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Skeleton.Card lines={3} className="h-40" />
-        <Skeleton.Card lines={3} className="h-40" />
-      </div>
-      <Skeleton.Table rows={6} cols={5} />
-    </div>
-  );
+  if (!summary) return <p className="text-sm text-slate-500">Loading...</p>;
 
   const today = todayRecord(summary.records);
   const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();

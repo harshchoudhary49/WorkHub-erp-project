@@ -31,7 +31,10 @@ const assertManagerOwns = async (managerEmployeeId, employeeId) => {
 // Drops any factor with no data for the period and renormalizes the
 // remaining weights, so a new hire with zero goals this month isn't
 // penalized for a metric that simply doesn't apply yet.
-const weightedAverage = (parts) => {
+// Exported for unit testing (see tests/performance.test.js) - this is the
+// core of the contribution-score math and worth being able to verify in
+// isolation from the database.
+export const weightedAverage = (parts) => {
   const usable = parts.filter((p) => p.value !== null && p.value !== undefined);
   if (usable.length === 0) return null;
   const totalWeight = usable.reduce((sum, p) => sum + p.weight, 0);

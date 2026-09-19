@@ -13,6 +13,26 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// Extra safety net for production: refuse to boot with the example
+// placeholder secrets or an obviously-too-short secret. This exists
+// because it's very easy to deploy a portfolio project with the
+// .env.example values still in place - better to fail loudly at startup
+// than to silently run with a guessable JWT secret.
+if (process.env.NODE_ENV === 'production') {
+  const weakSecrets = [
+    { key: 'JWT_ACCESS_SECRET', value: process.env.JWT_ACCESS_SECRET },
+    { key: 'JWT_REFRESH_SECRET', value: process.env.JWT_REFRESH_SECRET },
+  ].filter(({ value }) => value === 'change_this_access_secret' || value === 'change_this_refresh_secret' || value.length < 32);
+
+  if (weakSecrets.length > 0) {
+    console.error(
+      `Refusing to start in production with a weak/placeholder secret: ${weakSecrets.map((s) => s.key).join(', ')}`
+    );
+    console.error("Generate real secrets with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"");
+    process.exit(1);
+  }
+}
+
 export const env = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -35,11 +55,6 @@ export const env = {
     targetPercentage: Number(process.env.ATTENDANCE_TARGET_PERCENTAGE || 75),
     // 0 = Sunday ... 6 = Saturday (JS Date.getDay() convention).
     weekendDays: (process.env.WEEKEND_DAYS || '0,6').split(',').map(Number),
-    
-    // GPS Geofencing for "Office" check-ins
-    officeLatitude: Number(process.env.OFFICE_LATITUDE || 30.009841), // User's Office
-    officeLongitude: Number(process.env.OFFICE_LONGITUDE || 77.766153),
-    geofenceRadiusMeters: Number(process.env.GEOFENCE_RADIUS_METERS || 100),
   },
   leave: {
     // Default annual allocations per type, in days. WFH is set high because

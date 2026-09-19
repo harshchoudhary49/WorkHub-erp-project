@@ -1,10 +1,6 @@
-import dns from 'dns';
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 import app from './app.js';
 import { connectDB } from './config/db.js';
 import { env } from './config/env.js';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const start = async () => {
   await connectDB();
@@ -15,4 +11,3 @@ const start = async () => {
 };
 
 start();
-// Server entry

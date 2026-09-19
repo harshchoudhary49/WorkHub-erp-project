@@ -8,15 +8,7 @@ const attendanceSchema = new mongoose.Schema(
     // time check-in/check-out happened.
     date: { type: Date, required: true },
     checkIn: { type: Date, default: null },
-    checkInLocation: {
-      lat: { type: Number },
-      lng: { type: Number }
-    },
     checkOut: { type: Date, default: null },
-    checkOutLocation: {
-      lat: { type: Number },
-      lng: { type: Number }
-    },
     workingHours: { type: Number, default: 0 }, // decimal hours, e.g. 8.25
     lateByMinutes: { type: Number, default: 0 },
     overtimeMinutes: { type: Number, default: 0 },

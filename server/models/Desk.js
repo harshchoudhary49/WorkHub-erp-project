@@ -18,9 +18,8 @@ const deskSchema = new mongoose.Schema(
 );
 
 deskSchema.index({ floor: 1, deskCode: 1 }, { unique: true });
-deskSchema.index(
-  { assignedEmployee: 1 },
-  { unique: true, partialFilterExpression: { assignedEmployee: { $type: 'objectId' } } }
-);
+// Sparse so many desks can share assignedEmployee: null, but no two desks
+// can point at the same employee at once.
+deskSchema.index({ assignedEmployee: 1 }, { unique: true, sparse: true });
 
 export const Desk = mongoose.model('Desk', deskSchema);

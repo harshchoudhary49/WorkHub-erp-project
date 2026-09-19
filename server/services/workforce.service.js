@@ -1,5 +1,3 @@
-import { Department } from '../models/Department.js';
-import { Team } from '../models/Team.js';
 import { Employee } from '../models/Employee.js';
 import { Office } from '../models/Office.js';
 import { Floor } from '../models/Floor.js';

@@ -12,7 +12,6 @@ import {
   monthRange,
   standardCheckInDateTime,
 } from '../utils/dateUtils.js';
-import { getDistanceInMeters } from '../utils/locationUtils.js';
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -24,27 +23,8 @@ const findEmployeeOrThrow = async (userId) => {
 
 // --- Check in / check out -------------------------------------------------
 
-export const checkIn = async (userId, { mode = 'office', lat, lng } = {}) => {
+export const checkIn = async (userId, { mode = 'office' } = {}) => {
   const employee = await findEmployeeOrThrow(userId);
-
-  if (mode === 'office') {
-    if (lat == null || lng == null) {
-      throw ApiError.badRequest('Location is required for office check-in. Please enable location services.');
-    }
-
-    const distance = getDistanceInMeters(
-      lat,
-      lng,
-      env.attendance.officeLatitude,
-      env.attendance.officeLongitude
-    );
-    if (distance > env.attendance.geofenceRadiusMeters) {
-      throw ApiError.badRequest(
-        `You are too far from the office to check in (Distance: ${Math.round(distance)}m, Limit: ${env.attendance.geofenceRadiusMeters}m)`
-      );
-    }
-  }
-
   const today = startOfDay(new Date());
   const now = new Date();
 
@@ -59,12 +39,11 @@ export const checkIn = async (userId, { mode = 'office', lat, lng } = {}) => {
   const status = mode === 'remote' ? 'remote' : 'present';
 
   const attendance = existing
-    ? Object.assign(existing, { checkIn: now, checkInLocation: { lat, lng }, mode, status, lateByMinutes, markedBy: 'self' })
+    ? Object.assign(existing, { checkIn: now, mode, status, lateByMinutes, markedBy: 'self' })
     : new Attendance({
         employee: employee._id,
         date: today,
         checkIn: now,
-        checkInLocation: { lat, lng },
         mode,
         status,
         lateByMinutes,
@@ -75,7 +54,7 @@ export const checkIn = async (userId, { mode = 'office', lat, lng } = {}) => {
   return attendance;
 };
 
-export const checkOut = async (userId, { notes, lat, lng } = {}) => {
+export const checkOut = async (userId, { notes } = {}) => {
   const employee = await findEmployeeOrThrow(userId);
   const today = startOfDay(new Date());
   const now = new Date();
@@ -88,29 +67,11 @@ export const checkOut = async (userId, { notes, lat, lng } = {}) => {
     throw ApiError.conflict('You have already checked out today');
   }
 
-  if (attendance.mode === 'office') {
-    if (lat == null || lng == null) {
-      throw ApiError.badRequest('Location is required for office check-out. Please enable location services.');
-    }
-    const distance = getDistanceInMeters(
-      lat,
-      lng,
-      env.attendance.officeLatitude,
-      env.attendance.officeLongitude
-    );
-    if (distance > env.attendance.geofenceRadiusMeters) {
-      throw ApiError.badRequest(
-        `You are too far from the office to check out (Distance: ${Math.round(distance)}m, Limit: ${env.attendance.geofenceRadiusMeters}m)`
-      );
-    }
-  }
-
   const workingHours = round2((now - attendance.checkIn) / 3600000);
   const overtimeMinutes = Math.max(0, Math.round((workingHours - env.attendance.standardWorkHours) * 60));
   const isHalfDay = workingHours < env.attendance.halfDayThresholdHours;
 
   attendance.checkOut = now;
-  attendance.checkOutLocation = { lat, lng };
   attendance.workingHours = workingHours;
   attendance.overtimeMinutes = overtimeMinutes;
   attendance.status = isHalfDay ? 'half-day' : attendance.mode === 'remote' ? 'remote' : 'present';
